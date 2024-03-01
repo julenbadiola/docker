@@ -6,6 +6,8 @@ import os
 import uvicorn
 from pydantic import BaseModel
 from typing import Literal
+import random
+import socket
 
 HOST = os.environ.get('HOST', '0.0.0.0')
 PORT = os.environ.get('PORT', 80)
@@ -18,9 +20,32 @@ app = FastAPI(
     redoc_url=None
 )
 
+random_str = ''.join(random.choices('abcdefghijklmnopqrstuvwxyz', k=10))
+def get_ip():
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    s.settimeout(0)
+    try:
+        # doesn't even have to be reachable
+        s.connect(('10.254.254.254', 1))
+        IP = s.getsockname()[0]
+    except Exception:
+        IP = '127.0.0.1'
+    finally:
+        s.close()
+    return IP
+
 @app.get("/")
-def read_root():
-    return {"Hello": "World"}
+def healthcheck():
+    return {
+        "healthcheck": True
+    }
+
+@app.get("/info")
+def info():
+    return {
+        "instance": random_str,
+        "ip": get_ip()
+    }
 
 class SendRequestModel(BaseModel):
     method: Literal["get", "post", "put", "delete"]
