@@ -4,8 +4,9 @@ from fastapi.exceptions import HTTPException
 import requests
 import os
 import uvicorn
+from pydantic import BaseModel
+from typing import Literal
 
-TEST_DNS = os.environ.get('TEST_DNS', '')
 HOST = os.environ.get('HOST', '0.0.0.0')
 PORT = os.environ.get('PORT', 80)
 
@@ -21,13 +22,32 @@ app = FastAPI(
 def read_root():
     return {"Hello": "World"}
 
-@app.get("/dns_test")
-def dns_test():
+class SendRequestModel(BaseModel):
+    method: Literal["get", "post", "put", "delete"]
+    url: str
+    json: dict = None
+    headers: dict = None
+    cookies: dict = None
+
+@app.post("/send_request")
+def send_request(
+    data: SendRequestModel
+):
     try:
-        response = requests.get(TEST_DNS)
+        method = getattr(requests, data.method)
+        response = method(
+            url=data.url,
+            json=data.json,
+            headers=data.headers,
+            cookies=data.cookies
+        )
         return response.json()
     except requests.exceptions.RequestException as e:
-        raise HTTPException(status_code=500, detail=f"Error connecting to TEST_DNS {TEST_DNS}") 
+        raise HTTPException(status_code=500, detail={
+            "error": "RequestException",
+            "message": str(e)
+        
+        }) 
 
 @app.get("/request_context")
 def request_context(request: Request):

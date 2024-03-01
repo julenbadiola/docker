@@ -6,7 +6,7 @@ WORKDIR /app
 COPY app.py /app
 
 # Install the required packages
-RUN pip3 install fastapi requests uvicorn
+RUN pip3 install fastapi requests uvicorn pydantic
 
 # Expose the port 80
 EXPOSE 80
