@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import HTTPException
 import requests
@@ -19,14 +19,30 @@ app = FastAPI(
 
 @app.get("/")
 def read_root():
-    if TEST_DNS:
-        try:
-            response = requests.get(TEST_DNS)
-            return response.json()
-        except requests.exceptions.RequestException as e:
-            raise HTTPException(status_code=500, detail=f"Error connecting to TEST_DNS {TEST_DNS}") 
-    else:
-        return {"Hello": "World"}
+    return {"Hello": "World"}
+
+@app.get("/dns_test")
+def dns_test():
+    try:
+        response = requests.get(TEST_DNS)
+        return response.json()
+    except requests.exceptions.RequestException as e:
+        raise HTTPException(status_code=500, detail=f"Error connecting to TEST_DNS {TEST_DNS}") 
+
+@app.get("/request_context")
+def request_context(request: Request):
+    return {
+        "headers": request.headers,
+        "ip": request.client.host,
+    }
+
+@app.get("/error")
+def error_healthcheck():
+    raise HTTPException(status_code=500, detail="Error")
+
+@app.get("/healthcheck")
+def healthcheck():
+    return {"status": "ok"}
 
 if __name__ == "__main__":
     uvicorn.run(app, host=HOST, port=PORT)
