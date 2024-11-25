@@ -11,12 +11,14 @@ import socket
 
 HOST = os.environ.get('HOST', '0.0.0.0')
 PORT = os.environ.get('PORT', 80)
+root_path = os.environ.get('ROOT_PATH', None)
 
 app = FastAPI(
     title="Test App",
     description="This is a test app",
     version="0.0.1",
     docs_url="/docs",
+    root_path=root_path,
     redoc_url=None
 )
 
